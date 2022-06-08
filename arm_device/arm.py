@@ -6,6 +6,7 @@
 '''
 
 import sys
+import time
 import servo                                                # 导入jytech的机械臂库
 
 
@@ -45,12 +46,30 @@ if sys.argv[1] == 'set5' and len(sys.argv)==8 :
     servo.set5(degree_list, servo_time)                     # 调用
 
 
+if sys.argv[1] == 'torque' and len(sys.argv)==3 :
+    control = int(sys.argv[2])
+    servo.torque(control)                                   # 调用
 
 
 
+'''
+读取然后转过去
+'''
+if sys.argv[1] == 'learn' and len(sys.argv)==2 :
+    while True :
+        servo.torque(0)
+        get_str = input("转动到期望位置，键入[y]确认继续")
+        
+        degree_list = servo.get()
+        print(degree_list)
 
+        get_str = input("转动到任意位置，键入[y]确认继续\n")
+        
+        servo.torque(1)
 
-
+        
+        servo.set5(degree_list, 2000)                     # 调用
+        time.sleep(2)
 
 
 
