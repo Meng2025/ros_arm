@@ -16,9 +16,9 @@ uart_dev = serial.Serial('/dev/ttyUSB0', 115200, timeout=0.5)
 
 '''
 设置单个舵机角度
-    - sid: (servo id)       关节id
-    - sdg: (servo degree)   关节角度
-    - stime: (servo time)   执行时长
+    - sid: (servo id)       int 0-255       关节id        
+    - sdg: (servo degree)   int 0-255       关节角度        
+    - stime: (servo time)   int 0-inf ms    执行时长    
 '''
 def set1(sid, sdg, stime):
     data_body_id        = [sid]                             # 舵机ID
@@ -47,10 +47,15 @@ def set1(sid, sdg, stime):
 
 '''
 设置5个舵机角度
-    - dgx: (degree x)       id为x的舵机转角
-    - stime: (servo time)   执行时长
+    - dg_list: (len = 5)    int             包含5个角度值的列表
+    - stime: (servo time)   int 0-inf ms    执行时长
 '''
-def set5(dg1, dg2, dg3, dg4, dg5, stime):
+def set5(dg_list, stime):
+    dg1 = dg_list[0]
+    dg2 = dg_list[1]
+    dg3 = dg_list[2]
+    dg4 = dg_list[3]
+    dg5 = dg_list[4]
     data_body_id        = [0xfe]                            # 舵机ID
     data_body_type      = [0x83]                            # 指令类型
     data_body_parameter = [0x2a, 0x04]                      # 参数组1 
