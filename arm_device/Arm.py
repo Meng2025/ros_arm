@@ -17,7 +17,7 @@ import servo                                                # 导入机御科技
 def control(list) :
     # 角度值转换为 0-4096
     for i in range(5):
-        list[i] = int(list[i]*12.33333 + 2048)
+        list[i] = int(list[i]*11.3777 + 2048)
 
     # 运行时间计算
     current_degree = servo.get()
@@ -49,23 +49,6 @@ def torque(ctrl) :
 
 
 
-'''====================================================================================
-终端指令测试
-===================================================================================='''
-
-# $ python arm.py control <angle1> <angle2> <angle3> <angle4> <angle5>
-# <angle1> 单位为度，直立状态为0，向前和左为正，向后右为负，
-if sys.argv[1] == 'control' and len(sys.argv)==7 :
-    dg1 = int(sys.argv[2])
-    dg2 = int(sys.argv[3])
-    dg3 = int(sys.argv[4])
-    dg4 = int(sys.argv[5])
-    dg5 = int(sys.argv[6])
-    degree_list = [dg1, dg2, dg3, dg4, dg5]
-    control(degree_list)
-
-
-
 
 '''====================================================================================
 用于兼容亚博的机械臂指令
@@ -80,11 +63,6 @@ def Arm_serial_servo_write6(dg1, dg2, dg3, dg4, dg5, dg6, stime) :
 
     servo.set5(list,stime)
 
-
-
-def Arm_serial_servo_read(sid) :
-    angle = servo.get1(sid)
-    
 
 
 

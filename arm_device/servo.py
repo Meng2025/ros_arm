@@ -1,23 +1,22 @@
 # coding=UTF-8
 
-'''
-串口舵机协议的封装，提供上层使用接口
-'''
+
+'''====================================================================================
+机御科技的舵机驱动
+===================================================================================='''
 
 import sys
 import serial
 import time
 
 
-# 串口设备控制
 uart_dev = serial.Serial('/dev/ttyUSB0', 115200, timeout=0.5)
-
-
 
 '''
 设置单个舵机角度
+
     - sid: (servo id)       int 0-255       关节id        
-    - sdg: (servo degree)   int 0-255       关节角度        
+    - sdg: (servo degree)   int 0-4096      关节角度        
     - stime: (servo time)   int 0-inf ms    执行时长    
 '''
 def set1(sid, sdg, stime):
@@ -44,11 +43,11 @@ def set1(sid, sdg, stime):
     uart_dev.write(data_frame)
 
 
-
 '''
 设置5个舵机角度
-    - dg_list: (len = 5)    int             包含5个角度值的列表
-    - stime: (servo time)   int 0-inf ms    执行时长
+
+    - dg_list: (len = 5)    list    0-4096      包含5个角度值的列表，
+    - stime: (servo time)   int     0-inf ms    执行时长
 '''
 def set5(dg_list, stime):
     dg1 = dg_list[0]
@@ -89,9 +88,9 @@ def set5(dg_list, stime):
 
 
 
-
 '''
 获得单个舵机角度
+
     - sid: (servo id)       关节id
     - return int            转角
 '''
@@ -154,6 +153,7 @@ def get1(sid):
 
 '''
 获得所有舵机角度
+
     - return list            转角列表
 '''
 def get() :
@@ -161,10 +161,10 @@ def get() :
     return degree
 
 
-
 '''
 转矩开关
-    - ctrl: (1or0)       0 关闭转矩    1 打开转矩
+
+    - ctrl: (1 or 0)       0 关闭转矩    1 打开转矩
 '''
 def torque(ctrl) :
     data_body_id        = [0xfe]                            # 舵机ID
@@ -187,6 +187,97 @@ def torque(ctrl) :
     
     # 发送一个数据帧
     uart_dev.write(data_frame)    
+
+
+'''
+查询1个舵机的中位偏移量
+
+    - sid: (servo id)       关节id
+    - return int            转角
+'''
+def offset_read1(sid) :
+    data_body_id        = [sid]                             # 舵机ID
+    data_body_type      = [0x02]                            # 指令类型
+    data_body_parameter = [0x14, 0x02]                      # 参数
+    data_body_length    = [2 + len(data_body_parameter)]    # 数据长度
+
+    # 组合数据帧
+    frame_start  = [0xff, 0xff]                             # 帧头
+    frame_body   = data_body_id + data_body_length + \
+                data_body_type + data_body_parameter        # 数据体
+    i = 0                                                   # 求和校验循环参数
+    frame_check = [0x00]
+    while i<len(frame_body) :
+        frame_check[0] += frame_body[i]
+        i += 1
+    frame_check[0] = (~frame_check[0])&0xff                 # 求和校验
+    data_frame = frame_start + frame_body + frame_check     # 完整数据帧
+    
+    # 发送一个数据帧
+    uart_dev.write(data_frame)        
+
+    # 接收回应数据
+    rx_data = []
+    n = 8
+    while (uart_dev.inWaiting() != n) :
+        time.sleep(0.01)
+    rx_data += uart_dev.read(n)
+
+    # 解析回应数据
+    i=0
+    rx_data_frame = []
+    while i<len(rx_data) :
+        rx_data_frame = rx_data_frame + [ord(rx_data[i])]   # 转换为10进制数据
+        i = i + 1   
+    while i<len(rx_data) :
+        rx_data_frame = rx_data_frame + [ord(rx_data[i])]   # 转换为10进制数据
+        i = i + 1
+
+    if (rx_data_frame[0] == 0xff) and \
+        (rx_data_frame[1] == 0xf5) :                        # 帧头检查通过    !!!
+        check_sum = (~(rx_data_frame[2] + rx_data_frame[3] +\
+                    rx_data_frame[4] + rx_data_frame[5] +\
+                    rx_data_frame[6]))&0xff
+        if check_sum == rx_data_frame[7] :                  # 求和校验通过    @@@    
+            offset  = (rx_data_frame[5]<<8) + \
+                    rx_data_frame[6]                        # 数据拼接计算
+            return offset
+        else :                                              # 求和校验未通过   @@@
+            print("校验错误\n")
+            return -1
+    else :                                                  # 帧头检查未通过   !!!
+        print("帧头错误\n")
+        return -2
+
+'''
+设置1个舵机的中位偏移量
+
+    - sid: (servo id)       关节id
+    - value:            偏移值
+'''
+def offset_set1(sid,value) :
+    data_body_id        = [sid]                             # 舵机ID
+    data_body_type      = [0x03]                            # 指令类型
+    data_body_parameter = [0x14]                            # 参数
+    data_body_parameter +=[(value>>8)&0xff, value&0xff]
+    data_body_length    = [2 + len(data_body_parameter)]    # 数据长度
+
+    # 组合数据帧
+    frame_start  = [0xff, 0xff]                             # 帧头
+    frame_body   = data_body_id + data_body_length + \
+                data_body_type + data_body_parameter        # 数据体
+    i = 0                                                   # 求和校验循环参数
+    frame_check = [0x00]
+    while i<len(frame_body) :
+        frame_check[0] += frame_body[i]
+        i += 1
+    frame_check[0] = (~frame_check[0])&0xff                 # 求和校验
+    data_frame = frame_start + frame_body + frame_check     # 完整数据帧
+    
+    # 发送一个数据帧
+    uart_dev.write(data_frame)        
+
+
 
 
 
