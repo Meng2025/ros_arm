@@ -6,12 +6,10 @@
         "limitSymbolsToIncludedHeaders": false
       },
       "includePath": [
-        "/home/meng/learn_ros_ws/devel/include/**",
-        "/home/meng/ros_ws/devel/include/**",
         "/opt/ros/melodic/include/**",
-        "/home/meng/learn_ros_ws/src/action_learn/include/**",
-        "/home/meng/learn_ros_ws/src/call_src/include/**",
-        "/home/meng/learn_ros_ws/src/serial_pkg/include/**",
+        "/home/meng/ws_Github/ros_arm/learn_ros_ws/devel/include/**",
+        "/home/meng/ws_Github/ros_arm/learn_ros_ws/src/fun_call_pkg/**",
+
         "/usr/include/**"
       ],
       "name": "ROS",
